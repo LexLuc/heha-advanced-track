@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Hello World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a14;
+            --primary-color: #ff75a0;
+            --secondary-color: #6da5ff;
+            --text-color: #ffffff;
+            --heart-color: #ff3366;
+            --ui-bg: rgba(8, 6, 20, 0.92);
+            --border-color: #ffffff;
+            --scanline-opacity: 0.08;
+            --glow-color: rgba(255, 117, 160, 0.4);
+            --card-border: #c0c0c0;
+            --card-border-light: #ffffff;
+            --card-border-dark: #606060;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'DotGothic16', sans-serif;
+            color: var(--text-color);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Starfield background */
+        .starfield {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 0;
+        }
+
+        /* CRT Monitor Frame */
+        .crt-monitor {
+            position: relative;
+            z-index: 10;
+            width: 94%;
+            max-width: 640px;
+            background: #1a1a2e;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow:
+                0 0 0 4px #2a2a3e,
+                0 0 0 8px #0d0d1a,
+                0 0 60px rgba(255, 117, 160, 0.15),
+                0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .crt-screen {
+            position: relative;
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 28px 24px;
+            overflow: hidden;
+            /* Inner bevel */
+            box-shadow:
+                inset 0 0 30px rgba(0, 0, 0, 0.8),
+                inset 0 0 80px rgba(109, 165, 255, 0.05);
+        }
+
+        /* Scanlines overlay */
+        .crt-screen::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.15) 2px,
+                rgba(0, 0, 0, 0.15) 4px
+            );
+            pointer-events: none;
+            z-index: 100;
+            border-radius: 12px;
+        }
+
+        /* CRT color fringe */
+        .crt-screen::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            pointer-events: none;
+            z-index: 101;
+            border-radius: 12px;
+            animation: flicker 4s ease-in-out infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.99; }
+            50% { opacity: 1; }
+            100% { opacity: 0.995; }
+        }
+
+        /* Monitor base */
+        .crt-base {
+            width: 50%;
+            height: 8px;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #2a2a3e, #1a1a2e);
+            border-radius: 0 0 8px 8px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .crt-base::after {
+            content: "";
+            display: block;
+            width: 70%;
+            height: 4px;
+            margin: 0 auto;
+            background: #2a2a3e;
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* Power LED */
+        .power-led {
+            position: absolute;
+            bottom: 8px;
+            right: 20px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ff66;
+            box-shadow: 0 0 6px #00ff66, 0 0 12px #00ff66;
+            animation: led-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes led-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Content area */
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+
+        /* === PIXEL CARD (RPG Window) === */
+        .pixel-card {
+            background: var(--ui-bg);
+            position: relative;
+            padding: 24px 20px 20px;
+            /* Double-border RPG window style */
+            border: 3px solid var(--card-border-light);
+            outline: 3px solid var(--card-border-dark);
+            box-shadow:
+                inset 0 0 40px rgba(255, 117, 160, 0.08),
+                0 0 30px rgba(255, 117, 160, 0.1);
+            animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes card-enter {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Corner decorations - pixel style */
+        .corner {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border: 2px solid var(--primary-color);
+            z-index: 20;
+        }
+        .corner-tl { top: 4px; left: 4px; border-right: none; border-bottom: none; }
+        .corner-tr { top: 4px; right: 4px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 4px; left: 4px; border-right: none; border-top: none; }
+        .corner-br { bottom: 4px; right: 4px; border-left: none; border-top: none; }
+
+        /* === AVATAR === */
+        .pixel-avatar-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+
+        .pixel-avatar {
+            width: 120px;
+            height: 120px;
+            image-rendering: pixelated;
+            border: 3px solid var(--primary-color);
+            background: #fff;
+            padding: 4px;
+            box-shadow:
+                4px 4px 0px rgba(0, 0, 0, 0.6),
+                0 0 20px var(--glow-color);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+            animation: avatar-enter 0.5s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes avatar-enter {
+            from {
+                opacity: 0;
+                transform: scale(0) rotate(-15deg);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .pixel-avatar:hover {
+            transform: scale(1.1) rotate(3deg);
+            box-shadow:
+                6px 6px 0px rgba(0, 0, 0, 0.5),
+                0 0 30px var(--glow-color);
+        }
+
+        /* Floating hearts around avatar */
+        .avatar-heart {
+            position: absolute;
+            color: var(--heart-color);
+            font-size: 14px;
+            animation: orbit-heart 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .avatar-heart:nth-child(2) { top: -8px; right: -12px; animation-delay: 0s; }
+        .avatar-heart:nth-child(3) { bottom: 0; left: -14px; animation-delay: 1s; }
+        .avatar-heart:nth-child(4) { top: 20%; right: -16px; animation-delay: 2s; }
+
+        @keyframes orbit-heart {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+            50% { transform: translateY(-5px) scale(1.05); opacity: 0.8; }
+        }
+
+        /* === CHARACTER NAME TAG === */
+        .name-tag {
+            display: inline-block;
+            margin-bottom: 12px;
+            padding: 4px 16px;
+            background: linear-gradient(to bottom, var(--primary-color), color-mix(in srgb, var(--primary-color) 70%, #000));
+            border: 2px solid #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.55rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+            animation: tag-enter 0.4s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+            white-space: nowrap;
+        }
+
+        @keyframes tag-enter {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* === STATUS BAR (HP/MP decoration) === */
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            animation: status-enter 0.4s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes status-enter {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.45rem;
+        }
+
+        .stat-label {
+            color: #aaa;
+        }
+
+        .stat-bar {
+            width: 60px;
+            height: 8px;
+            background: #222;
+            border: 1px solid #555;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            transition: width 0.8s ease;
+        }
+
+        .stat-fill.hp {
+            background: linear-gradient(to bottom, #ff6b6b, #cc3333);
+            width: 75%;
+        }
+
+        .stat-fill.mp {
+            background: linear-gradient(to bottom, #6b9dff, #3366cc);
+            width: 60%;
+        }
+
+        .stat-fill.xp {
+            background: linear-gradient(to bottom, #6bff6b, #33cc33);
+            width: 45%;
+        }
+
+        /* === TITLE === */
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2rem;
+            margin: 0 0 16px;
+            text-shadow:
+                3px 3px 0px var(--primary-color),
+                -1px -1px 0 rgba(0,0,0,0.5);
+            line-height: 1.5;
+            animation: title-enter 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+            letter-spacing: 2px;
+        }
+
+        @keyframes title-enter {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+                letter-spacing: 12px;
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                letter-spacing: 2px;
+            }
+        }
+
+        /* === DIALOG BOX === */
+        .dialog-box {
+            background: rgba(0, 0, 10, 0.9);
+            border: 2px solid var(--card-border-light);
+            outline: 2px solid var(--card-border-dark);
+            padding: 16px 18px;
+            margin-top: 16px;
+            text-align: left;
+            min-height: 72px;
+            position: relative;
+            animation: dialog-enter 0.4s 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes dialog-enter {
+            from {
+                opacity: 0;
+                clip-path: inset(0 100% 0 0);
+            }
+            to {
+                opacity: 1;
+                clip-path: inset(0 0 0 0);
+            }
+        }
+
+        .dialog-box::after {
+            content: "▼";
+            position: absolute;
+            bottom: 6px;
+            right: 10px;
+            font-size: 10px;
+            animation: bounce 0.8s infinite;
+            color: var(--primary-color);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(3px); }
+        }
+
+        .typewriter {
+            display: inline-block;
+            overflow: hidden;
+            white-space: pre-wrap;
+            border-right: .15em solid var(--primary-color);
+            animation: blink-caret .75s step-end infinite;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #e8e8e8;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--primary-color) }
+        }
+
+        /* === BUTTON === */
+        .btn {
+            margin-top: 18px;
+            background: var(--primary-color);
+            border: none;
+            padding: 12px 28px;
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+            font-size: 0.65rem;
+            cursor: pointer;
+            position: relative;
+            /* 3D pixel button bevel */
+            border-top: 3px solid rgba(255, 255, 255, 0.5);
+            border-left: 3px solid rgba(255, 255, 255, 0.3);
+            border-right: 3px solid rgba(0, 0, 0, 0.3);
+            border-bottom: 3px solid rgba(0, 0, 0, 0.5);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.6);
+            transition: transform 0.08s, box-shadow 0.08s, filter 0.2s;
+            animation: btn-enter 0.4s 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+        }
+
+        @keyframes btn-enter {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px);
+            box-shadow: 4px 5px 0px rgba(0, 0, 0, 0.6);
+        }
+
+        .btn:active {
+            transform: translate(3px, 3px);
+            box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+            border-top: 3px solid rgba(0, 0, 0, 0.3);
+            border-left: 3px solid rgba(0, 0, 0, 0.2);
+            border-right: 3px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Pixel shake on click */
+        @keyframes pixel-shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-2px, 1px); }
+            50% { transform: translate(2px, -1px); }
+            75% { transform: translate(-1px, 2px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .shake {
+            animation: pixel-shake 0.15s ease;
+        }
+
+        /* === FLOATING ELEMENTS === */
+        .floating-heart {
+            position: absolute;
+            color: var(--heart-color);
+            font-size: 18px;
+            animation: float 5s ease-in-out infinite;
+            z-index: 50;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .floating-pixel {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: var(--secondary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+            animation: float-pixel 6s linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes float-pixel {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            15% { opacity: 0.8; }
+            85% { opacity: 0.8; }
+            100% {
+                transform: translateY(-120px) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        /* === SCREEN VIGNETTE === */
+        .vignette {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(
+                ellipse at center,
+                transparent 50%,
+                rgba(0, 0, 0, 0.6) 100%
+            );
+            pointer-events: none;
+            z-index: 90;
+            border-radius: 12px;
+        }
+
+        /* === BOTTOM INFO BAR === */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.4rem;
+            color: #666;
+            animation: info-enter 0.4s 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes info-enter {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .info-bar .coin {
+            color: #ffd700;
+        }
+
+        /* Transition for theme switching */
+        .theme-transition .pixel-avatar {
+            animation: avatar-switch 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes avatar-switch {
+            0% { transform: scale(1) rotate(0); }
+            30% { transform: scale(0.6) rotate(-10deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        .theme-transition .name-tag {
+            animation: tag-switch 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes tag-switch {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .theme-transition .dialog-box {
+            animation: dialog-flash 0.3s ease;
+        }
+
+        @keyframes dialog-flash {
+            0% { border-color: var(--primary-color); }
+            100% { border-color: var(--card-border-light); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Star canvas background -->
+    <canvas class="starfield" id="starfield"></canvas>
+
+    <div style="position: relative; z-index: 10;">
+        <div class="crt-monitor">
+            <div class="power-led"></div>
+            <div class="crt-screen">
+                <div class="vignette"></div>
+
+                <div class="container">
+                    <!-- Floating hearts -->
+                    <div class="floating-heart" style="top: -5%; left: 2%;">&#9829;</div>
+                    <div class="floating-heart" style="top: 8%; right: 3%; animation-delay: 0.7s; font-size: 12px;">&#9829;</div>
+                    <div class="floating-heart" style="bottom: 15%; left: 8%; animation-delay: 1.3s; font-size: 14px;">&#9829;</div>
+
+                    <div class="pixel-card" id="pixel-card">
+                        <div class="corner corner-tl"></div>
+                        <div class="corner corner-tr"></div>
+                        <div class="corner corner-bl"></div>
+                        <div class="corner corner-br"></div>
+
+                        <!-- Avatar with orbiting hearts -->
+                        <div class="pixel-avatar-container">
+                            <svg id="avatar" class="pixel-avatar" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
+                                shape-rendering="crispEdges">
+                            </svg>
+                            <span class="avatar-heart">&#9829;</span>
+                            <span class="avatar-heart">&#9829;</span>
+                            <span class="avatar-heart">&#9829;</span>
+                        </div>
+
+                        <!-- Character name tag -->
+                        <div>
+                            <span class="name-tag" id="name-tag">LOADING...</span>
+                        </div>
+
+                        <!-- Status bars -->
+                        <div class="status-bar">
+                            <div class="stat">
+                                <span class="stat-label">HP</span>
+                                <div class="stat-bar"><div class="stat-fill hp" id="hp-bar"></div></div>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">MP</span>
+                                <div class="stat-bar"><div class="stat-fill mp" id="mp-bar"></div></div>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">XP</span>
+                                <div class="stat-bar"><div class="stat-fill xp" id="xp-bar"></div></div>
+                            </div>
+                        </div>
+
+                        <h1>HELLO WORLD</h1>
+
+                        <div class="dialog-box" id="dialog">
+                            <span class="typewriter" id="text-target"></span>
+                        </div>
+
+                        <button class="btn" id="main-btn" onclick="resetTyping()">&#9654; NEXT</button>
+
+                        <div class="info-bar">
+                            <span><span class="coin">&#9733;</span> LV.99</span>
+                            <span id="click-count">CLICK: 0</span>
+                            <span>STAGE 1-1</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="crt-base"></div>
+    </div>
+
+    <!-- Floating pixels (background) -->
+    <script>
+        // === STARFIELD BACKGROUND ===
+        (function() {
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            const STAR_COUNT = 100;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            for (let i = 0; i < STAR_COUNT; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 0.1 + 0.02,
+                    brightness: Math.random(),
+                    twinkleSpeed: Math.random() * 0.005 + 0.001
+                });
+            }
+
+            function drawStars() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const time = Date.now() * 0.001;
+
+                stars.forEach(s => {
+                    const twinkle = Math.sin(time * s.twinkleSpeed * 60 + s.x) * 0.4 + 0.6;
+                    const alpha = s.brightness * twinkle;
+
+                    // Pixel-snap star positions
+                    const px = Math.round(s.x);
+                    const py = Math.round(s.y);
+
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fillRect(px, py, Math.ceil(s.size), Math.ceil(s.size));
+
+                    // Slow drift upward
+                    s.y -= s.speed;
+                    if (s.y < -2) {
+                        s.y = canvas.height + 2;
+                        s.x = Math.random() * canvas.width;
+                    }
+                });
+
+                requestAnimationFrame(drawStars);
+            }
+            drawStars();
+        })();
+
+        // === FLOATING PARTICLES ===
+        function createParticles() {
+            const body = document.querySelector('body');
+            for (let i = 0; i < 15; i++) {
+                let div = document.createElement('div');
+                div.className = 'floating-pixel';
+                div.style.left = Math.random() * 100 + 'vw';
+                div.style.top = (Math.random() * 40 + 60) + 'vh';
+                div.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                div.style.animationDelay = (Math.random() * 3) + 's';
+                body.appendChild(div);
+            }
+        }
+        createParticles();
+
+        // === AVATAR THEMES ===
+        const avatarThemes = [
+            {
+                name: "Sakura", type: "Yandere (病娇)",
+                hair: "#ff75a0", skin: "#ffe0d1", eyes: "#2c2137", blush: "#ffaec9", mouth: "#d475ff", bg: "#fff",
+                messages: [
+                    "你的代码里...只需要有我一个人的逻辑就够了哦...❤",
+                    "呐，为什么要去运行别人的程序？我会嫉妒得报错的...",
+                    "我把其他的进程都杀掉了...现在CPU只属于我们两个了...❤",
+                    "只要我们永远在一个死循环里，就没人能把我们分开了...",
+                    "你不看我的话，我就把所有的变量名都改成乱码哦？❤",
+                    "为什么你的 Git log 里有别人的名字？...那是谁？",
+                    "把你锁在这个 Localhost 里，这样谁也找不到你了...",
+                    "多余的依赖项...全部 Clear 掉就好了吧？嘻嘻...",
+                    "你的心跳就像 CPU 频率一样，只会为我加速对吧？",
+                    "让我成为你的 Main 函数吧，永远作为入口也被你调用..."
+                ]
+            },
+            {
+                name: "Yuki", type: "Kuudere (三无)",
+                hair: "#6da5ff", skin: "#fff0e6", eyes: "#1a237e", blush: "#ffcdd2", mouth: "#ff4081", bg: "#e3f2fd",
+                messages: [
+                    "编译完成。情感模块未加载。输出：Hello World。",
+                    "逻辑校验通过。你的代码...并不讨厌。",
+                    "系统运行正常。温度稳定。可以继续指令。",
+                    "只要在这个作用域内，我会一直在这里。这是常量定义。",
+                    "观测到你的心率异常。建议检查代码逻辑。",
+                    "不用在意我...我只是一个安静的后台进程。",
+                    "握手协议达成。连接已建立。",
+                    "...这个算法，很优美。评价：S级。",
+                    "正在分析你的操作习惯...数据已归档。",
+                    "如果不输入指令，我会自动进入休眠模式。"
+                ]
+            },
+            {
+                name: "Midori", type: "Haraguro (腹黑)",
+                hair: "#66bb6a", skin: "#ffcc80", eyes: "#1b5e20", blush: "#ef9a9a", mouth: "#8d6e63", bg: "#e8f5e9",
+                messages: [
+                    "这个API很安全的，快调用试看嘛... 呵呵 (rm -rf warning)",
+                    "哎呀，不小心把你的注释都删掉了，反正你也不看对吧？😊",
+                    "你的代码风格真独特... 像一团可爱的意大利面呢。",
+                    "在这个分支上，你无论怎么挣扎，Conflict 都是注定的哦。",
+                    "虽然报错了，但看着你着急的样子真有趣呢~",
+                    "听说你昨晚没保存就关机了？真·是·遗·憾·呢。",
+                    "这种写法，大概只有你能看懂了吧？真是天才（笑）。",
+                    "放心，我不会告诉别人你的密码是 123456 的。",
+                    "要我帮你优化吗？可能会少掉一半的代码哦...物理上的。",
+                    "哎呀，服务器好像又崩了，真的不是我干的哦？😊"
+                ]
+            },
+            {
+                name: "Akane", type: "Tsundere (傲娇)",
+                hair: "#ef5350", skin: "#ffe0d1", eyes: "#b71c1c", blush: "#ff8a80", mouth: "#d32f2f", bg: "#ffebee",
+                messages: [
+                    "哼！我才不是特意为了帮你才修复Bug的！别误会了！",
+                    "别盯着我看！专心写你的代码！笨蛋！(///)",
+                    "这、这点程度的算法我也能写出来！才不是在夸你呢！",
+                    "既然你求我了，我就勉为其难帮你运行一下吧。感激我吧！",
+                    "才、才没有在等你上线呢！只是刚好路过而已！",
+                    "喂！那个变量名是怎么回事？笨手笨脚的...",
+                    "虽然你的代码写得很烂，但...思路还算过得去吧。",
+                    "我都说了这种 Warning 忽略就好了！别让我说第二遍！",
+                    "要是你敢用别的 IDE，我、我就再也不理你了！",
+                    "把我的文档读清楚啊！真拿你没办法..."
+                ]
+            },
+            {
+                name: "Kage", type: "Chuunibyou (中二)",
+                hair: "#424242", skin: "#d7ccc8", eyes: "#00e676", blush: "#cfd8dc", mouth: "#212121", bg: "#fafafa",
+                messages: [
+                    "寄宿在我左手中的黑暗代码啊... 听从召唤，降临世间吧！",
+                    "吾之封印已解开！见证这终焉的递归吧！Explosion！",
+                    "错的不是我，错的是这个世界的编译器！",
+                    "颤抖吧凡人，这是超越了 O(n!) 的禁忌算法！",
+                    "在那遥远的服务器彼端，正在呼唤我的真名...",
+                    "这就是... 'Null Pointer' 的诅咒吗... 呃啊！",
+                    "你也感受到了吗？网络波动中潜藏的魔力...",
+                    "不仅是 Root 权限，连世界的真理我也要一并获取！",
+                    "凡是阻挡吾辈去路的防火墙，终将被红莲业火吞噬！",
+                    "现在正是 Coding 之时！让世界在那蓝屏中战栗吧！"
+                ]
+            },
+            {
+                name: "Hikari", type: "Natural (天然)",
+                hair: "#ffa000", skin: "#ffe0b2", eyes: "#00bcd4", blush: "#ffcc80", mouth: "#e65100", bg: "#fff8e1",
+                messages: [
+                    "哎呀？我刚刚是不是把服务器电源踢掉了？(・ω<)",
+                    "哇！键盘上长出了猫咪！我可以摸摸它再写代码吗？",
+                    "虽然不懂这个函数是做什么的，但是名字好可爱就留着吧！",
+                    "Bug？那是程序的精灵在捉迷藏呀，为什么要抓住它呢？",
+                    "诶？为什么屏幕变成蓝色的了？是新的屏保吗？",
+                    "刚刚有一只虫子飞进机箱了，它也是 Bug 吗？",
+                    "哇~ 这个进度条转来转去的，好像旋转木马哦！",
+                    "不可以吃掉 Cookie 吗？可是它听起来很好吃耶...",
+                    "我把 'sudo' 当成 'sudoku' (数独) 玩了一下午...",
+                    "咦？原来删掉这个文件会让电脑不开心呀？对不起..."
+                ]
+            }
+        ];
+
+        function getAvatarSVGContent(t) {
+            return `
+                <!-- Background -->
+                <rect width="20" height="20" fill="${t.bg}"/>
+
+                <!-- Hair Back -->
+                <rect x="4" y="4" width="12" height="12" fill="${t.hair}"/>
+                <rect x="3" y="5" width="14" height="6" fill="${t.hair}"/>
+
+                <!-- Face -->
+                <rect x="5" y="7" width="10" height="8" fill="${t.skin}"/>
+                <rect x="6" y="15" width="8" height="1" fill="${t.skin}"/>
+
+                <!-- Bangs/Hair Front -->
+                <rect x="5" y="4" width="2" height="4" fill="${t.hair}"/>
+                <rect x="7" y="4" width="2" height="3" fill="${t.hair}"/>
+                <rect x="11" y="4" width="2" height="3" fill="${t.hair}"/>
+                <rect x="13" y="4" width="2" height="4" fill="${t.hair}"/>
+                <rect x="9" y="4" width="2" height="2" fill="${t.hair}"/>
+
+                <!-- Eyes -->
+                <rect x="6" y="9" width="3" height="3" fill="${t.eyes}"/>
+                <rect x="6" y="9" width="1" height="1" fill="#fff"/>
+                <rect x="11" y="9" width="3" height="3" fill="${t.eyes}"/>
+                <rect x="11" y="9" width="1" height="1" fill="#fff"/>
+
+                <!-- Blush -->
+                <rect x="5" y="11" width="2" height="1" fill="${t.blush}" opacity="0.6"/>
+                <rect x="13" y="11" width="2" height="1" fill="${t.blush}" opacity="0.6"/>
+
+                <!-- Mouth -->
+                <rect x="9" y="12" width="2" height="1" fill="${t.mouth}"/>
+
+                <!-- Hair Accessories / Highlights -->
+                <rect x="3" y="6" width="1" height="2" fill="#fff" opacity="0.5"/>
+            `;
+        }
+
+        const target = document.getElementById('text-target');
+        const avatarSvg = document.getElementById('avatar');
+        const nameTag = document.getElementById('name-tag');
+        const pixelCard = document.getElementById('pixel-card');
+        const hpBar = document.getElementById('hp-bar');
+        const mpBar = document.getElementById('mp-bar');
+        const xpBar = document.getElementById('xp-bar');
+        const clickCountEl = document.getElementById('click-count');
+        let clickCount = 0;
+        let index = 0;
+        let text = "";
+        let typingTimer = null;
+
+        function typeWriter() {
+            if (index < text.length) {
+                target.textContent += text.charAt(index);
+                index++;
+                typingTimer = setTimeout(typeWriter, 45);
+            }
+        }
+
+        function resetTyping() {
+            // Clear any ongoing typing
+            if (typingTimer) clearTimeout(typingTimer);
+
+            target.textContent = "";
+            index = 0;
+            clickCount++;
+            clickCountEl.textContent = `CLICK: ${clickCount}`;
+
+            // Shake effect
+            pixelCard.classList.add('shake');
+            pixelCard.classList.add('theme-transition');
+            setTimeout(() => {
+                pixelCard.classList.remove('shake');
+                pixelCard.classList.remove('theme-transition');
+            }, 400);
+
+            // Randomize Theme
+            const theme = avatarThemes[Math.floor(Math.random() * avatarThemes.length)];
+
+            // Set Avatar
+            avatarSvg.innerHTML = getAvatarSVGContent(theme);
+
+            // Set name tag
+            nameTag.textContent = `${theme.name} — ${theme.type}`;
+
+            // Set Page Primary Color to match Hair
+            document.documentElement.style.setProperty('--primary-color', theme.hair);
+            document.documentElement.style.setProperty('--glow-color', theme.hair + '66');
+
+            // Randomize status bars
+            hpBar.style.width = (Math.random() * 40 + 40) + '%';
+            mpBar.style.width = (Math.random() * 50 + 30) + '%';
+            xpBar.style.width = (Math.random() * 60 + 20) + '%';
+
+            // Pick random message
+            text = theme.messages[Math.floor(Math.random() * theme.messages.length)];
+            typeWriter();
+        }
+
+        // Start on load
+        window.onload = function () {
+            resetTyping();
+        };
+    </script>
+</body>
+
+</html>
