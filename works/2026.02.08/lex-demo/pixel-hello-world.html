@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Hello World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #2c2137;
+            --primary-color: #ff75a0;
+            /* Anime pink */
+            --secondary-color: #6da5ff;
+            /* Soft blue */
+            --text-color: #ffffff;
+            --heart-color: #ff3366;
+            --ui-bg: rgba(0, 0, 0, 0.75);
+            --border-color: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image:
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 100% 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Changed to DotGothic16 for better CJK support and lighter weight */
+            font-family: 'DotGothic16', sans-serif;
+            color: var(--text-color);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* CRT Flicker Animation */
+        @keyframes flicker {
+            0% {
+                opacity: 0.97;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.98;
+            }
+        }
+
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: rgba(18, 16, 16, 0.1);
+            opacity: 0;
+            z-index: 2;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .pixel-card {
+            background: var(--ui-bg);
+            border: 4px solid var(--border-color);
+            padding: 2rem;
+            box-shadow:
+                8px 8px 0px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(255, 117, 160, 0.2);
+            position: relative;
+        }
+
+        /* Pixel Corners */
+        .pixel-card::before,
+        .pixel-card::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-color);
+            left: 0;
+        }
+
+        .pixel-card::before {
+            top: -4px;
+            width: calc(100% - 8px);
+            left: 4px;
+        }
+
+        .pixel-card::after {
+            bottom: -4px;
+            width: calc(100% - 8px);
+            left: 4px;
+        }
+
+        /* Side Borders Adjustments for rounded pixel look */
+        .pixel-card-inner {
+            border-left: 4px solid var(--bg-color);
+            border-right: 4px solid var(--bg-color);
+        }
+
+        .image-container {
+            margin-bottom: 20px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .pixel-avatar {
+            width: 150px;
+            height: 150px;
+            image-rendering: pixelated;
+            /* Essential for pixel art */
+            border: 4px solid var(--primary-color);
+            background: #fff;
+            padding: 5px;
+            box-shadow: 4px 4px 0px var(--secondary-color);
+            transition: transform 0.2s;
+        }
+
+        .pixel-avatar:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+
+        .dialog-box {
+            background: #000;
+            border: 2px solid #fff;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+            min-height: 80px;
+            position: relative;
+        }
+
+        .dialog-box::after {
+            content: "▼";
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            animation: bounce 0.8s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(3px);
+            }
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5rem;
+            margin: 0;
+            text-shadow: 4px 4px 0px var(--primary-color);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .typewriter {
+            display: inline-block;
+            overflow: hidden;
+            white-space: pre-wrap;
+            border-right: .15em solid var(--primary-color);
+            animation: blink-caret .75s step-end infinite;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #efefef;
+        }
+
+        @keyframes blink-caret {
+
+            from,
+            to {
+                border-color: transparent
+            }
+
+            50% {
+                border-color: var(--primary-color)
+            }
+        }
+
+        /* Decorative Elements */
+        .floating-heart {
+            position: absolute;
+            color: var(--heart-color);
+            font-size: 24px;
+            animation: float 2s ease-in-out infinite;
+            top: -20px;
+            right: -20px;
+        }
+
+        .floating-pixel {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--secondary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            animation: float-pixel 3s linear infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes float-pixel {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100px) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        .btn {
+            margin-top: 20px;
+            background: var(--primary-color);
+            border: none;
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow:
+                inset 4px 4px 0px rgba(255, 255, 255, 0.4),
+                inset -4px -4px 0px rgba(0, 0, 0, 0.2),
+                4px 4px 0px #000;
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow:
+                2px 2px 0px #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Floating hearts decoration -->
+        <div class="floating-heart" style="top: 10%; left: 5%;">♥</div>
+        <div class="floating-heart" style="top: 20%; right: 10%; animation-delay: 0.5s;">♥</div>
+
+        <div class="pixel-card">
+            <div class="pixel-avatar-container">
+                <!-- Inline SVG Pixel Avatar (Updated by JS) -->
+                <svg id="avatar" class="pixel-avatar" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
+                    shape-rendering="crispEdges">
+                    <!-- Content will be injected by JS -->
+                </svg>
+            </div>
+
+            <h1>HELLO WORLD</h1>
+
+            <div class="dialog-box" id="dialog">
+                <span class="typewriter" id="text-target"></span>
+            </div>
+
+            <button class="btn" onclick="resetTyping()">CLICK ME!</button>
+        </div>
+    </div>
+
+    <!-- Background particles -->
+    <script>
+        function createParticles() {
+            const body = document.querySelector('body');
+            for (let i = 0; i < 20; i++) {
+                let div = document.createElement('div');
+                div.className = 'floating-pixel';
+                div.style.left = Math.random() * 100 + 'vw';
+                div.style.top = (Math.random() * 50 + 50) + 'vh';
+                div.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                div.style.animationDelay = (Math.random() * 2) + 's';
+                body.appendChild(div);
+            }
+        }
+        createParticles();
+
+        // Avatar Themes (Palettes & Personalities)
+        const avatarThemes = [
+            {
+                name: "Sakura", type: "Yandere (病娇)",
+                hair: "#ff75a0", skin: "#ffe0d1", eyes: "#2c2137", blush: "#ffaec9", mouth: "#d475ff", bg: "#fff",
+                messages: [
+                    "你的代码里...只需要有我一个人的逻辑就够了哦...❤",
+                    "呐，为什么要去运行别人的程序？我会嫉妒得报错的...",
+                    "我把其他的进程都杀掉了...现在CPU只属于我们两个了...❤",
+                    "只要我们永远在一个死循环里，就没人能把我们分开了...",
+                    "你不看我的话，我就把所有的变量名都改成乱码哦？❤",
+                    "为什么你的 Git log 里有别人的名字？...那是谁？",
+                    "把你锁在这个 Localhost 里，这样谁也找不到你了...",
+                    "多余的依赖项...全部 Clear 掉就好了吧？嘻嘻...",
+                    "你的心跳就像 CPU 频率一样，只会为我加速对吧？",
+                    "让我成为你的 Main 函数吧，永远作为入口也被你调用..."
+                ]
+            },
+            {
+                name: "Yuki", type: "Kuudere (三无)",
+                hair: "#6da5ff", skin: "#fff0e6", eyes: "#1a237e", blush: "#ffcdd2", mouth: "#ff4081", bg: "#e3f2fd",
+                messages: [
+                    "编译完成。情感模块未加载。输出：Hello World。",
+                    "逻辑校验通过。你的代码...并不讨厌。",
+                    "系统运行正常。温度稳定。可以继续指令。",
+                    "只要在这个作用域内，我会一直在这里。这是常量定义。",
+                    "观测到你的心率异常。建议检查代码逻辑。",
+                    "不用在意我...我只是一个安静的后台进程。",
+                    "握手协议达成。连接已建立。",
+                    "...这个算法，很优美。评价：S级。",
+                    "正在分析你的操作习惯...数据已归档。",
+                    "如果不输入指令，我会自动进入休眠模式。"
+                ]
+            },
+            {
+                name: "Midori", type: "Haraguro (腹黑)",
+                hair: "#66bb6a", skin: "#ffcc80", eyes: "#1b5e20", blush: "#ef9a9a", mouth: "#8d6e63", bg: "#e8f5e9",
+                messages: [
+                    "这个API很安全的，快调用试看嘛... 呵呵 (rm -rf warning)",
+                    "哎呀，不小心把你的注释都删掉了，反正你也不看对吧？😊",
+                    "你的代码风格真独特... 像一团可爱的意大利面呢。",
+                    "在这个分支上，你无论怎么挣扎，Conflict 都是注定的哦。",
+                    "虽然报错了，但看着你着急的样子真有趣呢~",
+                    "听说你昨晚没保存就关机了？真·是·遗·憾·呢。",
+                    "这种写法，大概只有你能看懂了吧？真是天才（笑）。",
+                    "放心，我不会告诉别人你的密码是 123456 的。",
+                    "要我帮你优化吗？可能会少掉一半的代码哦...物理上的。",
+                    "哎呀，服务器好像又崩了，真的不是我干的哦？😊"
+                ]
+            },
+            {
+                name: "Akane", type: "Tsundere (傲娇)",
+                hair: "#ef5350", skin: "#ffe0d1", eyes: "#b71c1c", blush: "#ff8a80", mouth: "#d32f2f", bg: "#ffebee",
+                messages: [
+                    "哼！我才不是特意为了帮你才修复Bug的！别误会了！",
+                    "别盯着我看！专心写你的代码！笨蛋！(///)",
+                    "这、这点程度的算法我也能写出来！才不是在夸你呢！",
+                    "既然你求我了，我就勉为其难帮你运行一下吧。感激我吧！",
+                    "才、才没有在等你上线呢！只是刚好路过而已！",
+                    "喂！那个变量名是怎么回事？笨手笨脚的...",
+                    "虽然你的代码写得很烂，但...思路还算过得去吧。",
+                    "我都说了这种 Warning 忽略就好了！别让我说第二遍！",
+                    "要是你敢用别的 IDE，我、我就再也不理你了！",
+                    "把我的文档读清楚啊！真拿你没办法..."
+                ]
+            },
+            {
+                name: "Kage", type: "Chuunibyou (中二)",
+                hair: "#424242", skin: "#d7ccc8", eyes: "#00e676", blush: "#cfd8dc", mouth: "#212121", bg: "#fafafa",
+                messages: [
+                    "寄宿在我左手中的黑暗代码啊... 听从召唤，降临世间吧！",
+                    "吾之封印已解开！见证这终焉的递归吧！Explosion！",
+                    "错的不是我，错的是这个世界的编译器！",
+                    "颤抖吧凡人，这是超越了 O(n!) 的禁忌算法！",
+                    "在那遥远的服务器彼端，正在呼唤我的真名...",
+                    "这就是... 'Null Pointer' 的诅咒吗... 呃啊！",
+                    "你也感受到了吗？网络波动中潜藏的魔力...",
+                    "不仅是 Root 权限，连世界的真理我也要一并获取！",
+                    "凡是阻挡吾辈去路的防火墙，终将被红莲业火吞噬！",
+                    "现在正是 Coding 之时！让世界在那蓝屏中战栗吧！"
+                ]
+            },
+            {
+                name: "Hikari", type: "Natural (天然)",
+                hair: "#ffa000", skin: "#ffe0b2", eyes: "#00bcd4", blush: "#ffcc80", mouth: "#e65100", bg: "#fff8e1",
+                messages: [
+                    "哎呀？我刚刚是不是把服务器电源踢掉了？(・ω<)",
+                    "哇！键盘上长出了猫咪！我可以摸摸它再写代码吗？",
+                    "虽然不懂这个函数是做什么的，但是名字好可爱就留着吧！",
+                    "Bug？那是程序的精灵在捉迷藏呀，为什么要抓住它呢？",
+                    "诶？为什么屏幕变成蓝色的了？是新的屏保吗？",
+                    "刚刚有一只虫子飞进机箱了，它也是 Bug 吗？",
+                    "哇~ 这个进度条转来转去的，好像旋转木马哦！",
+                    "不可以吃掉 Cookie 吗？可是它听起来很好吃耶...",
+                    "我把 'sudo' 当成 'sudoku' (数独) 玩了一下午...",
+                    "咦？原来删掉这个文件会让电脑不开心呀？对不起..."
+                ]
+            }
+        ];
+
+        function getAvatarSVGContent(t) {
+            return `
+                <!-- Background -->
+                <rect width="20" height="20" fill="${t.bg}"/>
+                
+                <!-- Hair Back -->
+                <rect x="4" y="4" width="12" height="12" fill="${t.hair}"/>
+                <rect x="3" y="5" width="14" height="6" fill="${t.hair}"/>
+                
+                <!-- Face -->
+                <rect x="5" y="7" width="10" height="8" fill="${t.skin}"/>
+                <rect x="6" y="15" width="8" height="1" fill="${t.skin}"/>
+                
+                <!-- Bangs/Hair Front -->
+                <rect x="5" y="4" width="2" height="4" fill="${t.hair}"/>
+                <rect x="7" y="4" width="2" height="3" fill="${t.hair}"/>
+                <rect x="11" y="4" width="2" height="3" fill="${t.hair}"/>
+                <rect x="13" y="4" width="2" height="4" fill="${t.hair}"/>
+                <rect x="9" y="4" width="2" height="2" fill="${t.hair}"/>
+
+                <!-- Eyes -->
+                <rect x="6" y="9" width="3" height="3" fill="${t.eyes}"/>
+                <rect x="6" y="9" width="1" height="1" fill="#fff"/> <!-- Sparkle -->
+                <rect x="11" y="9" width="3" height="3" fill="${t.eyes}"/>
+                <rect x="11" y="9" width="1" height="1" fill="#fff"/> <!-- Sparkle -->
+
+                <!-- Blush -->
+                <rect x="5" y="11" width="2" height="1" fill="${t.blush}" opacity="0.6"/>
+                <rect x="13" y="11" width="2" height="1" fill="${t.blush}" opacity="0.6"/>
+
+                <!-- Mouth -->
+                <rect x="9" y="12" width="2" height="1" fill="${t.mouth}"/>
+                
+                <!-- Hair Accessories / Highlights -->
+                <rect x="3" y="6" width="1" height="2" fill="#fff" opacity="0.5"/>
+            `;
+        }
+
+        const target = document.getElementById('text-target');
+        const avatarSvg = document.getElementById('avatar');
+        let index = 0;
+        let text = "";
+
+        function typeWriter() {
+            if (index < text.length) {
+                target.textContent += text.charAt(index);
+                index++;
+                setTimeout(typeWriter, 50);
+            }
+        }
+
+        function resetTyping() {
+            target.textContent = "";
+            index = 0;
+
+            // Randomize Theme (Color + Avatar + Personality)
+            const theme = avatarThemes[Math.floor(Math.random() * avatarThemes.length)];
+
+            // Set Avatar
+            avatarSvg.innerHTML = getAvatarSVGContent(theme);
+
+            // Set Page Primary Color to match Hair
+            document.documentElement.style.setProperty('--primary-color', theme.hair);
+
+            // Pick random message from theme
+            text = theme.messages[Math.floor(Math.random() * theme.messages.length)];
+            typeWriter();
+        }
+
+        // Start typing on load
+        window.onload = function () {
+            resetTyping();
+        };
+    </script>
+</body>
+
+</html>
