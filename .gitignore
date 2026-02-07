@@ -1,0 +1,5 @@
+# AI tool skill directories (copied from .agent/skills/)
+.claude/
+.trae/
+.agents/
+.cursor/
